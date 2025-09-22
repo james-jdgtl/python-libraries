@@ -1,21 +1,26 @@
-name: Build and Release Python Wheel
+name: Publish Python Wheel to ghcr.io
 
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.0
+      - 'v*.*.*'
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  build-and-release:
+  build-and-push:
     runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -23,20 +28,23 @@ jobs:
 
       - name: Install build tools
         run: |
-          python -m pip install --upgrade pip
-          pip install build twine
+          pip install build
 
       - name: Build wheel
         run: |
           python -m build
+      - name: Install ORAS CLI
+        run: |
+          curl -LO https://github.com/oras-project/oras/releases/latest/download/oras_$(uname -s)_$(uname -m).tar.gz
+          tar -xvzf oras_*.tar.gz -C /usr/local/bin oras
 
-      - name: Get wheel filename
-        id: get_wheel
+      - name: Login to ghcr.io
         run: |
-          echo "WHEEL_FILE=$(ls dist/*.whl | head -n 1)" >> $GITHUB_ENV
-      - name: Publish to GitHub Packages
+          echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
+
+      - name: Push wheel to ghcr.io
         run: |
-          twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          WHEEL_FILE=$(ls dist/*.whl | head -n 1)
+          oras push ghcr.io/${{ github.repository }}:${{ github.ref_name }} \
+            --artifact-type application/vnd.python.whl \
+            $WHEEL_FILE
