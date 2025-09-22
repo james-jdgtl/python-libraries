@@ -1,0 +1,19 @@
+[project]
+name = "classes"
+version = "0.1.0"
+description = "Reusable classes for SRE automation"
+authors = [{ name = "James Hart" }]
+readme = "README.md"
+requires-python = ">=3.8"
+
+dependencies = [
+    "requests>=2.31.0",
+    "PyYAML>=6.0",
+    "PyGithub>=2.5.0",
+    "GitPython>=3.1.0",
+    "slack_sdk>=3.31.0"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
