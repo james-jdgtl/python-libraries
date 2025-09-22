@@ -36,7 +36,7 @@ jobs:
           echo "WHEEL_FILE=$(ls dist/*.whl | head -n 1)" >> $GITHUB_ENV
       - name: Publish to GitHub Packages
         run: |
-          twine upload dist/*
+          twine upload --repository-url https://upload.pypi.github.com/ dist/*
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
