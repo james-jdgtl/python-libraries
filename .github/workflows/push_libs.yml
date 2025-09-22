@@ -1,25 +1,18 @@
-name: Publish Python Wheel to ghcr.io
+name: Publish Python Package
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-
-permissions:
-  contents: read
-  packages: write
+    # tags:
+    #   - 'v*'  # Publish on version tags
 
 jobs:
-  build-and-push:
+  build-and-publish:
     runs-on: ubuntu-latest
-
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}
-
+    permissions:
+      contents: read
+      packages: write  # Required for GitHub Packages
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,23 +21,15 @@ jobs:
 
       - name: Install build tools
         run: |
-          pip install build
+          python -m pip install --upgrade pip
+          pip install build twine
 
-      - name: Build wheel
-        run: |
-          python -m build
-      - name: Install ORAS CLI
-        run: |
-          curl -LO https://github.com/oras-project/oras/releases/latest/download/oras_1.3.0_linux_amd64.tar.gz
-          tar -xvzf oras_*.tar.gz -C /usr/local/bin oras
+      - name: Build wheel and sdist
+        run: python -m build
 
-      - name: Login to ghcr.io
+      - name: Publish to GitHub Packages
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
-
-      - name: Push wheel to ghcr.io
-        run: |
-          WHEEL_FILE=$(ls dist/*.whl | head -n 1)
-          oras push ghcr.io/${{ github.repository }}:${{ github.ref_name }} \
-            --artifact-type application/vnd.python.whl \
-            $WHEEL_FILE
+          twine upload --repository-url https://pypi.pkg.github.com/<org> dist/*
