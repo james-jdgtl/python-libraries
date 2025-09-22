@@ -1,7 +1,13 @@
 [project]
 name = "python-libraries"
 version = "0.1.0"
-description = "Add your description here"
+description = "Reusable classes for SRE projects"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+    "gitpython>=3.1.0",
+    "pygithub>=2.5.0",
+    "pyyaml==6.0.1",
+    "requests>=2.32.5",
+    "slack-sdk>=3.36.0",
+]
